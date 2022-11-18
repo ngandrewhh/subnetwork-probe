@@ -1,3 +1,6 @@
+import argparse
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -7,7 +10,6 @@ from masked_bert import MaskedWordLevelBert
 from train import train_ner, train_ud, train_pos, save_mask_scores
 from visualize import visualize_head_sparsity, visualize_dense_sparsity, visualize_layer_attn_sparsity
 
-import argparse
 
 # conda create -n probe python=3.7 -y
 # conda activate probe
@@ -87,7 +89,8 @@ def run(huggingface_model,
                         log, model = train_pos(bert_encoder, './data/UD_English/en-ud-train.conllu',
                                                './data/UD_English/en-ud-dev.conllu', **kwargs)
 
-                    path = f"./out/exp_{exp_name}_task_{task}_set_{setting}_met_{method}_p_{str(params).replace(' ', '_')}"
+                    os.makedirs('./out', exist_ok=True)
+                    path = f"./out/exp_{exp_name}_task_{task}_set_{setting}_met_{method}"
                     save_mask_scores(model, log, base=path)
 
                     print("Final results: {}".format(log[-1]))

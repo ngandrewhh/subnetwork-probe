@@ -394,7 +394,7 @@ def save_mask_scores(model, log, base='../test/mask_scores'):
     fname = base
     for key in keys:
         if key in log[-1].keys():
-            fname = fname + '_{}={:.4f}'.format(key, log[-1][key] * 100)
+            fname = fname + f'_{key}_{int(log[-1][key] * 100)}'
     fname = fname + '.pt'
 
     print("Saving to {}...".format(fname))

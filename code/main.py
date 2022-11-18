@@ -22,11 +22,12 @@ import argparse
 #   >> change to from transformers.models.bert.modeling_bert
 
 
-def run(huggingface_model='bert-base-uncased',
-        tasks=('NER', 'UD', 'UPOS'),
+def run(huggingface_model,
+        tasks=('UPOS', 'NER', 'UD'),
         settings=('pretrained', 'resetenc', 'resetall'),
         methods=('prune', 'mlp1'),
-        exp_name='new'):
+        exp_name='new',
+        **kwargs):
 
     for task in tasks:
         for setting in settings:
@@ -41,7 +42,6 @@ def run(huggingface_model='bert-base-uncased',
                                    (768, 1), (192, 1), (24, 1), (6, 1), (1, 1))
 
                 for params in params_list:
-                    epochs = 20
                     print(task)
                     print(method)
                     if method == 'mlp1':
@@ -73,9 +73,7 @@ def run(huggingface_model='bert-base-uncased',
                         print("Resetting all!")
                         bert.reset_weights(encoder_only=False)
 
-                    kwargs = {'lambda_init': lambda_init, 'lambda_final': lambda_final,
-                              'epochs': epochs, 'lr_base': lr_base, 'mask_lr_base': mask_lr_base,
-                              'verbose': verbose, 'masked': masked}
+                    kwargs.update({'masked': masked})
                     print(kwargs)
 
                     print("Finding subnetwork...")
@@ -112,15 +110,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--huggingface_model', default='bert-base-uncased')
     parser.add_argument('-n', '--exp_name', default=int(datetime.datetime.now().timestamp()))
+    parser.add_argument('--lambda_init', default=0)
+    parser.add_argument('--lambda_final', default=1)
+    parser.add_argument('-e', '--epochs', default=5)
+    parser.add_argument('-b', '--batch_size', default=100)
+    parser.add_argument('-s', '--subbatch_size', default=25)
+    parser.add_argument('-lr', '--lr_base', default=1e-3)
+    parser.add_argument('-lm', '--mask_lr_base', default=0.2)
+    parser.add_argument('-v', '--verbose', default=True)
     args = parser.parse_args()
 
     plt.switch_backend('agg')
-    mask_lr_base = 0.2
-    lr_base = 5e-5
-    lambda_init = 0
-    lambda_final = 1
-    verbose = True
-
     run(**args.__dict__)
 
 

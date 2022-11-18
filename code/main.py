@@ -90,7 +90,7 @@ def run(huggingface_model,
                                                './data/UD_English/en-ud-dev.conllu', **kwargs)
 
                     os.makedirs('./out', exist_ok=True)
-                    path = f"./out/exp_{exp_name}_task_{task}_set_{setting}_met_{method}"
+                    path = f"./out/exp_{exp_name}_task_{task}_set_{setting}_met_{method}_params_{str(params).replace(', ', '_')}"
                     save_mask_scores(model, log, base=path)
 
                     print("Final results: {}".format(log[-1]))
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     import datetime
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--huggingface_model', default='bert-base-uncased')
-    parser.add_argument('-n', '--exp_name', default=int(datetime.datetime.now().timestamp()))
+    parser.add_argument('-n', '--exp_name', default=datetime.datetime.now().strftime('%Y%m%d_%H%M'))
     parser.add_argument('--lambda_init', default=0)
     parser.add_argument('--lambda_final', default=1)
     parser.add_argument('-e', '--epochs', default=5)

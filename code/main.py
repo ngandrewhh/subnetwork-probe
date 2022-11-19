@@ -36,12 +36,11 @@ def run(huggingface_model,
             for method in methods:
 
                 if method == 'mlp1':
-                    params_list = (1, 2, 5, 10, 25, 50, 125, 250, 768)
+                    params_list = (1, 5, 10, 50, 250, 768)
                 elif method == 'finetune':
-                    params_list = (1,)
+                    params_list = (1, )
                 elif method == 'prune':
-                    params_list = ((768, 768), (768, 192), (768, 24), (768, 6),
-                                   (768, 1), (192, 1), (24, 1), (6, 1), (1, 1))
+                    params_list = ((768, 768), (768, 24), (768, 1), (192, 1), (24, 1), (1, 1))
 
                 for params in params_list:
                     print(task)

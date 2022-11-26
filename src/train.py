@@ -398,24 +398,24 @@ def train_spam(bert_encoder, lambda_init=1000, lambda_final=10000,
               masked=False):
 
     def calc_dev():
+        language_acc = 0
         model.eval()
-        all_preds = np.array([])
-        all_labels = pack_labels([exmp[1] for exmp in dev_data])
+
         for j in range(0, len(dev_data), batch_size):
             exmps = dev_data[j:j + batch_size]
             sents = [exmp[0] for exmp in exmps]
+            label = [exmp[1] for exmp in exmps]
             with torch.no_grad():
-                pred = model.predict_batch(sents).cpu().numpy()  # numsent x 3
-            pred = np.argmax(pred, axis=1)
-            all_preds = np.concatenate((all_preds, pred))
-        return calc_f1(all_preds, all_labels)
+                pred, mask = model.predict_batch(sents)
+                pred = pred.cpu().numpy()  # numsent x 3
+                mask = mask.cpu().numpy()
+                pred_correct = np.argmax(pred, axis=2) == np.array([label, ]).repeat(pred.shape[1]).reshape(pred.shape[:2])
+            language_acc += sent_avgs(pred_correct, mask)
+
+        return language_acc / len(dev_data)
 
     def pack_labels(labels):
         return np.array(labels)
-
-    def calc_f1(preds, labels):
-        assert len(preds) == len(labels)
-        return f1_score(labels, preds, average='weighted', labels=[0, 1])
 
     def converged(log, k=10, thresh=0.01, min_epochs=25):
         if len(log) < min_epochs:
@@ -465,11 +465,12 @@ def train_spam(bert_encoder, lambda_init=1000, lambda_final=10000,
                     examples_subbatch = examples[i:i + subbatch_size]
                     sents = [exmp[0] for exmp in examples]
                     labels = [exmp[1] for exmp in examples]
-                    pred = model.predict_batch(sents)
-                    targ = torch.Tensor(labels).long().to(torch.device('cuda:0'))
-                    # targ = from_numpy(pack_labels(labels)).long()
-                    loss = F.cross_entropy(pred, targ)
+                    pred, mask = model.predict_batch(sents)
+                    targ = from_numpy(pack_labels(labels)).long()
+
+                    loss = masked_loss(targ.repeat_interleave(pred.shape[1]).reshape(pred.shape[:2]), pred, mask)
                     (loss * len(examples_subbatch) / len(examples)).backward()
+
                 if masked:
                     reg = model.bert.compute_total_regularizer()
                     (lambda_reg * reg).backward()

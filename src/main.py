@@ -25,7 +25,8 @@ from visualize import visualize_head_sparsity, visualize_dense_sparsity, visuali
 
 
 def run(huggingface_model='bert-base-uncased',
-        tasks=('SPAM', 'NER', 'UPOS', 'UD'),
+        tasks=('SPAM', ),
+        # tasks=('SPAM', 'NER', 'UPOS', 'UD'),
         settings=('pretrained', 'resetenc', 'resetall'),
         methods=('prune', 'mlp1'),
         exp_name='new',
@@ -110,6 +111,9 @@ def run(huggingface_model='bert-base-uncased',
 
 
 if __name__ == "__main__":
+    if not os.getcwd().endswith('probe'):
+        os.chdir('./..')
+
     import datetime
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--huggingface_model', default='bert-base-uncased')

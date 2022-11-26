@@ -22,13 +22,13 @@ def load_spam():
                                              .replace('?', ' ')
                                              .replace('!', ' ')
                                              .replace('\x96', '').strip()), dataset['sms']))
-    clean_label = list(map(lambda x: {0: 1, 1: 0}[x], dataset['label']))
+    clean_label = list(map(lambda x: {0:1, 1:0}[x], dataset['label']))
     return list(zip(clean_text, clean_label))
 
 
 def split_spam(spam_data, train_val_split=0.85):
-    spam = [i for i in spam_data if i[1] == 1]
-    ham = [i for i in spam_data if i[1] == 0]
+    spam = [i for i in spam_data if i[1] == 0]
+    ham = [i for i in spam_data if i[1] == 1]
 
     sz_spam_train = int(train_val_split * len(spam))
     sz_ham_train = int(train_val_split * len(ham))
@@ -139,7 +139,8 @@ def sent_avgs(correct, pad_mask):
     pad_mask_2[:, 0] = 0  # remove cls
     total = 0
     for i in range(len(correct)):
-        total += np.sum(correct[i] * pad_mask_2[i]) / np.sum(pad_mask_2[i])
+        if np.sum(pad_mask_2[i]) > 0:
+            total += np.sum(correct[i] * pad_mask_2[i]) / np.sum(pad_mask_2[i])
     return total
 
 

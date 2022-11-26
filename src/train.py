@@ -6,6 +6,8 @@ from util import from_numpy, partial_state_dict
 from classifiers import POSModel, NERModel, UDModel, SPAMModel
 from dataset_utils import load_conllu, build_vocab, sent_avgs, masked_loss, evaluate, load_ner, load_spam, split_spam
 
+from sklearn.metrics import f1_score
+
 
 def train_pos(bert_encoder, train_path, dev_path, lambda_init=1000, lambda_final=10000,
               lr_base=3e-5, mask_lr_base=0.1, lr_warmup_frac=0.1,
@@ -398,10 +400,10 @@ def train_spam(bert_encoder, lambda_init=1000, lambda_final=10000,
     def calc_dev():
         model.eval()
         all_preds = np.array([])
-        all_labels = pack_labels([exmp['labels'] for exmp in dev_data])
+        all_labels = pack_labels([exmp[1] for exmp in dev_data])
         for j in range(0, len(dev_data), batch_size):
             exmps = dev_data[j:j + batch_size]
-            sents = [exmp['sent'] for exmp in exmps]
+            sents = [exmp[0] for exmp in exmps]
             with torch.no_grad():
                 pred = model.predict_batch(sents).cpu().numpy()  # numsent x 3
             pred = np.argmax(pred, axis=1)
@@ -413,8 +415,7 @@ def train_spam(bert_encoder, lambda_init=1000, lambda_final=10000,
 
     def calc_f1(preds, labels):
         assert len(preds) == len(labels)
-        result = evaluate(labels, preds)
-        return result[2] / 100
+        return f1_score(labels, preds, average='weighted', labels=[0, 1])
 
     def converged(log, k=10, thresh=0.01, min_epochs=25):
         if len(log) < min_epochs:
@@ -465,7 +466,8 @@ def train_spam(bert_encoder, lambda_init=1000, lambda_final=10000,
                     sents = [exmp[0] for exmp in examples]
                     labels = [exmp[1] for exmp in examples]
                     pred = model.predict_batch(sents)
-                    targ = from_numpy(pack_labels(labels)).long()
+                    targ = torch.Tensor(labels).long().to(torch.device('cuda:0'))
+                    # targ = from_numpy(pack_labels(labels)).long()
                     loss = F.cross_entropy(pred, targ)
                     (loss * len(examples_subbatch) / len(examples)).backward()
                 if masked:

@@ -6,11 +6,11 @@ from transformers import BertModel, BertTokenizer
 from util import use_cuda, from_numpy
 
 
-def unpack(ann, sent_lengths):
+def unpack(ann, sent_lengths, unpack_to_len=None):
     packed_len, dim = ann.shape
     assert sum(sent_lengths) == packed_len, \
         "Packed len is {} but should be {}".format(sent_lengths, packed_len)
-    pad_len = max(sent_lengths)
+    pad_len = unpack_to_len or max(sent_lengths)
     batch = len(sent_lengths)
     ann_padded = ann.new_zeros((batch, pad_len, dim))
     pad_mask = ann.new_zeros((batch, pad_len))

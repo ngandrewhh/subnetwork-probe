@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from bert import WordLevelBert
 from classifiers import BertEncoder
 from masked_bert import MaskedWordLevelBert
-from train import train_ner, train_ud, train_pos, save_mask_scores
+from train import train_ner, train_ud, train_pos, train_spam, save_mask_scores
 from visualize import visualize_head_sparsity, visualize_dense_sparsity, visualize_layer_attn_sparsity
 
 
@@ -24,8 +24,8 @@ from visualize import visualize_head_sparsity, visualize_dense_sparsity, visuali
 #   >> change to from transformers.models.bert.modeling_bert
 
 
-def run(huggingface_model,
-        tasks=('UPOS', 'NER', 'UD'),
+def run(huggingface_model='bert-base-uncased',
+        tasks=('SPAM', 'NER', 'UPOS', 'UD'),
         settings=('pretrained', 'resetenc', 'resetall'),
         methods=('prune', 'mlp1'),
         exp_name='new',
@@ -87,6 +87,8 @@ def run(huggingface_model,
                     elif task == "UPOS":
                         log, model = train_pos(bert_encoder, './data/UD_English/en-ud-train.conllu',
                                                './data/UD_English/en-ud-dev.conllu', **kwargs)
+                    elif task == "SPAM":
+                        log, model = train_spam(bert_encoder, **kwargs)
 
                     os.makedirs('./out', exist_ok=True)
                     path = f"./out/exp_{exp_name}_task_{task}_set_{setting}_met_{method}_params_{str(params).replace(', ', '_')}"

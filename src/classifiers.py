@@ -4,6 +4,8 @@ import torch.nn.init as init
 
 from util import use_cuda
 
+from bert import unpack
+
 class BertEncoder(nn.Module):
     def __init__(self, bert, dropout_p = 0.1, mlp1 = False, rank = None):
         super().__init__()
@@ -225,3 +227,23 @@ class NERModel(nn.Module):
     def predict_batch(self, sentences):
         ann1, _ = self.bert_encoder(sentences, padded = False, include_clssep = False)
         return self.span_tip(ann1)
+
+
+class SPAMModel(nn.Module):
+    def __init__(self, bert_encoder):
+        super().__init__()
+        self.bert_encoder = bert_encoder
+        self.bert = self.bert_encoder.bert
+        d_features = self.bert_encoder.bert.dim
+        self.pin = nn.Linear(d_features, 2)
+        self.pout = nn.Linear(256, 2)
+
+        if use_cuda:
+            self.cuda()
+
+    def predict_batch(self, sentences):
+        enc, _ = self.bert_encoder(sentences, padded=False, include_clssep=False)
+        enc_unpacked, enc_valid = unpack(enc, list(map(len, sentences)), 256)
+        enc_binary = self.pin(enc_unpacked)
+        enc_reduced = torch.argmax(nn.functional.softmax(enc_binary, dim=2), dim=2)
+        return self.pout(enc_reduced.to(torch.float))

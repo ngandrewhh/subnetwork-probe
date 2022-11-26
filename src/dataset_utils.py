@@ -5,10 +5,45 @@ from collections import defaultdict
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize, sent_tokenize
+import random
+import re
+
+
+def load_spam():
+    from datasets import load_dataset
+    dataset = load_dataset('sms_spam', split='train')
+    clean_text = list(map(lambda x: re.split(' +', x
+             .replace("&lt;", '[')
+             .replace("&gt;", ']')
+             .replace('\n', '')
+             .replace('.', ' ')
+             .replace(',', ' ')
+             .replace('?', ' ')
+             .replace('!', ' ')
+             .replace('\x96', '').strip()), dataset['sms']))
+    return list(zip(clean_text, dataset['label']))
+
+
+def split_spam(spam_data, train_val_split=0.85):
+    spam = [i for i in spam_data if i[1] == 1]
+    ham = [i for i in spam_data if i[1] == 0]
+    spam_prop = len(spam) / len(spam_data)
+
+    sz_spam_train = int(train_val_split * len(spam))
+    sz_ham_train = int(train_val_split * len(ham))
+
+    random.shuffle(spam)
+    random.shuffle(ham)
+
+    spam_train, ham_train, spam_val, ham_val = spam[:sz_spam_train], ham[:sz_ham_train], spam[sz_spam_train:], ham[sz_ham_train:]
+    assert len(spam_train) + len(ham_train) + len(spam_val) + len(ham_val) == len(spam_data)
+
+    return spam_train + ham_train, spam_val + ham_val
+
 
 def load_ner(path, tag2i, maxlen = 128):
     sents = []
-    with open(path, encoding = "ISO-8859-1") as file:
+    with open("../" + path, encoding = "ISO-8859-1") as file:
         sent = []
         labels = []
         for line in file:
